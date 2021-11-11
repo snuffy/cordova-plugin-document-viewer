@@ -44,31 +44,31 @@
 #pragma mark - ReaderViewController methods
 
 //// individual content size calculation for double page modes
-//- (void)updateContentSize:(UIScrollView *)scrollView
-//{
-//    CGFloat contentHeight = scrollView.bounds.size.height; // Height
-//    
-//    CGFloat contentWidth;
-//    switch (self.viewMode) {
-//        case SDVReaderContentViewModeDoublePage:
-//        {
-//            contentWidth = (scrollView.bounds.size.width * ((maximumPage+1)/2));
-//            break;
-//        }
-//        case SDVReaderContentViewModeCoverDoublePage:
-//        {
-//            contentWidth = (scrollView.bounds.size.width * ((maximumPage+2)/2));
-//            break;
-//        }
-//        default:
-//        {
-//            contentWidth = (scrollView.bounds.size.width * (maximumPage));
-//            break;
-//        }
-//    }
-//    
-//    scrollView.contentSize = CGSizeMake(contentWidth, contentHeight);
-//}
+- (void)updateContentSize:(UIScrollView *)scrollView
+{
+    CGFloat contentHeight = scrollView.bounds.size.height; // Height
+    
+    CGFloat contentWidth;
+    switch (self.viewMode) {
+        case SDVReaderContentViewModeDoublePage:
+        {
+            contentWidth = (scrollView.bounds.size.width * ((maximumPage+1)/2));
+            break;
+        }
+        case SDVReaderContentViewModeCoverDoublePage:
+        {
+            contentWidth = (scrollView.bounds.size.width * ((maximumPage+2)/2));
+            break;
+        }
+        default:
+        {
+            contentWidth = (scrollView.bounds.size.width * (maximumPage));
+            break;
+        }
+    }
+    
+    scrollView.contentSize = CGSizeMake(contentWidth, contentHeight);
+}
 
 // https://github.com/etabard/Reader/commit/1001fcee4ccef5db329452dd59d5dfe48bdb783c
 - (void)handleLandscapeDoublePage {
@@ -1062,7 +1062,6 @@ static UIColor *previousColor;
             viewRect.origin.y += STATUS_HEIGHT;
             viewRect.size.height -= STATUS_HEIGHT;
             }
-            
         }
     }
     
@@ -1078,13 +1077,16 @@ static UIColor *previousColor;
     theScrollView.scrollsToTop = NO; theScrollView.delaysContentTouches = NO; theScrollView.pagingEnabled = YES;
     theScrollView.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight);
     theScrollView.backgroundColor = [UIColor clearColor]; theScrollView.delegate = self;
+    theScrollView.tag = 0;
     [self.view addSubview:theScrollView];
     
     CGRect toolbarRect = viewRect; toolbarRect.size.height = TOOLBAR_HEIGHT;
 //    mainToolbar = [[ReaderMainToolbar alloc] initWithFrame:toolbarRect document:document]; // ReaderMainToolbar
     mainToolbar = [[SDVReaderMainToolbar alloc] initWithFrame:toolbarRect document:document options:self.viewerOptions]; // customised ReaderMainToolbar
-    mainToolbar.delegate = self; // ReaderMainToolbarDelegate
+    mainToolbar.delegate = self;// ReaderMainToolbarDelegate
+    mainToolbar.tag = 2;
     [self.view addSubview:mainToolbar];
+    
     
     CGRect pagebarRect = self.view.bounds; pagebarRect.size.height = PAGEBAR_HEIGHT;
    if (@available(iOS 11.0, *)) {
@@ -1095,7 +1097,9 @@ static UIColor *previousColor;
     }
     mainPagebar = [[SDVReaderMainPagebar alloc] initWithFrame:pagebarRect document:document]; // ReaderMainPagebar
     mainPagebar.delegate = self; // ReaderMainPagebarDelegate
+    mainPagebar.tag = 3;
     [self.view addSubview:mainPagebar];
+    
     // hide thumbs if not required
     if ([document.pageCount integerValue] <= pagesPerScreen) {
         [mainPagebar hidePagebar]; // Show
@@ -1103,6 +1107,16 @@ static UIColor *previousColor;
 
     
     if (fakeStatusBar != nil) [self.view addSubview:fakeStatusBar]; // Add status bar background view
+    fakeStatusBar.tag = 1;
+    if(fakeStatusBar != nil) {
+        UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
+        if (UIInterfaceOrientationIsPortrait(orientation)) {
+            [fakeStatusBar setHidden: NO];
+        }
+        else {
+            [fakeStatusBar setHidden: YES];
+        }
+    }
     
     UITapGestureRecognizer *singleTapOne = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleSingleTap:)];
     singleTapOne.numberOfTouchesRequired = 1; singleTapOne.numberOfTapsRequired = 1; singleTapOne.delegate = self;
@@ -1165,19 +1179,32 @@ static UIColor *previousColor;
 }
 
 //reinitialize everything on rotation
-//- (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
-//{
-//    //double pages behave strangely...
-//    if (viewMode != SDVReaderContentViewModeSinglePage) {
-//        for(UIView *subview in [theScrollView subviews]) {
-//            [subview removeFromSuperview];
-//        }
-//    }
-//    [self updateContentSize:theScrollView];
-//    [self layoutContentViews:theScrollView];
-//    [self showDocumentPage:currentPage];
-//    ignoreDidScroll = NO;
-//}
+- (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
+{
+    for(UIView *subview in [theScrollView subviews]) {
+        [subview removeFromSuperview];
+    }
+
+    for(UIView *subview in [self.view subviews]) {
+        [subview removeFromSuperview];
+    }
+    theScrollView = nil;
+    [self viewDidLoad];
+    [self updateContentSize:theScrollView];
+    [self layoutContentViews:theScrollView];
+    [self handleLandscapeDoublePage];
+
+    UIView *fakeStatusBar = [self.view viewWithTag: 1];
+    if(fakeStatusBar != nil) {
+        UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
+        if (UIInterfaceOrientationIsPortrait(orientation)) {
+            [fakeStatusBar setHidden: NO];
+        }
+        else {
+            [fakeStatusBar setHidden: YES];
+        }
+    }
+}
 
 
 #pragma mark - UIGestureRecognizerDelegate methods
