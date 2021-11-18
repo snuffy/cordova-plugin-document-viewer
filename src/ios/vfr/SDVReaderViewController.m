@@ -1135,6 +1135,9 @@ static UIColor *previousColor;
     contentViews = [NSMutableDictionary new]; lastHideTime = [NSDate date];
     
     minimumPage = 1; maximumPage = [document.pageCount integerValue];
+    
+    
+    [self handleLandscapeDoublePage];
 }
 
 // show status bar
