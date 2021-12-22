@@ -1106,18 +1106,18 @@ static UIColor *previousColor;
     }
 
     
-    if (fakeStatusBar != nil) [self.view addSubview:fakeStatusBar]; // Add status bar background view
-    fakeStatusBar.tag = 1;
-    if(fakeStatusBar != nil) {
-        UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
-        if (UIInterfaceOrientationIsPortrait(orientation)) {
-            [fakeStatusBar setHidden: NO];
-        }
-        else {
-            [fakeStatusBar setHidden: YES];
-        }
-    }
-    
+//    if (fakeStatusBar != nil) [self.view addSubview:fakeStatusBar]; // Add status bar background view
+//    fakeStatusBar.tag = 1;
+//    if(fakeStatusBar != nil) {
+//        UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
+//        if (UIInterfaceOrientationIsPortrait(orientation)) {
+//            [fakeStatusBar setHidden: NO];
+//        }
+//        else {
+//            [fakeStatusBar setHidden: YES];
+//        }
+//    }
+//
     UITapGestureRecognizer *singleTapOne = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleSingleTap:)];
     singleTapOne.numberOfTouchesRequired = 1; singleTapOne.numberOfTapsRequired = 1; singleTapOne.delegate = self;
     [self.view addGestureRecognizer:singleTapOne];
@@ -1137,7 +1137,7 @@ static UIColor *previousColor;
     minimumPage = 1; maximumPage = [document.pageCount integerValue];
     
     
-    [self handleLandscapeDoublePage];
+//    [self handleLandscapeDoublePage];
 }
 
 // show status bar
@@ -1169,21 +1169,33 @@ static UIColor *previousColor;
 //  https://github.com/etabard/Reader/commit/1001fcee4ccef5db329452dd59d5dfe48bdb783c
 - (void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation duration:(NSTimeInterval)duration
 {
-    if (CGSizeEqualToSize(theScrollView.contentSize, CGSizeZero) == false)
-    {
-        if ((viewMode == SDVReaderContentViewModeDoublePage)
-            || (viewMode == SDVReaderContentViewModeCoverDoublePage)) {
-            [self handleLandscapeDoublePage];
-        } else {
-            [self updateContentViews:theScrollView];
-        }
-        lastAppearSize = CGSizeZero;
-    }
+        
+        
+    
+//
+//        for(UIView *subview in [theScrollView subviews]) {
+//            [subview removeFromSuperview];
+//        }
+//        theScrollView = nil;
+
+//        int page = currentPage;
+//        [self viewDidLoad];
+//        [self addContentView:theScrollView page:page];
+//        [self updateContentSize:theScrollView];
+//        [self showDocument];
+//        [self layoutContentViews:theScrollView];
+//
+//        NSLog(@"[pdfviewer] single page");
+//        self.pagesPerScreen = 1;
+//        self.viewMode = SDVReaderContentViewModeSinglePage;
+//
 }
 
 //reinitialize everything on rotation
 - (void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)fromInterfaceOrientation
 {
+    int p = currentPage;
+
     for(UIView *subview in [theScrollView subviews]) {
         [subview removeFromSuperview];
     }
@@ -1193,20 +1205,17 @@ static UIColor *previousColor;
     }
     theScrollView = nil;
     [self viewDidLoad];
+    [self addContentView:theScrollView page:p];
     [self updateContentSize:theScrollView];
+    [self showDocument];
     [self layoutContentViews:theScrollView];
+    NSLog(@"[pdfviewer] single page");
+    self.pagesPerScreen = 1;
+    self.viewMode = SDVReaderContentViewModeSinglePage;
+
     [self handleLandscapeDoublePage];
 
-    UIView *fakeStatusBar = [self.view viewWithTag: 1];
-    if(fakeStatusBar != nil) {
-        UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
-        if (UIInterfaceOrientationIsPortrait(orientation)) {
-            [fakeStatusBar setHidden: NO];
-        }
-        else {
-            [fakeStatusBar setHidden: YES];
-        }
-    }
+    lastAppearSize = CGSizeZero;
 }
 
 
